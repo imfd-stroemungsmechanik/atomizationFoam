@@ -10,3 +10,7 @@
   - Fully parallelized
 - Based on interIsoFoam in OpenFOAM v1912
 
+## Compilation
+
+- First, compile the library libAtomization in the src folder.
+- Afterwards, compile the solver atomizationFoam in the application folder.
