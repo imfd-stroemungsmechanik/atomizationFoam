@@ -28,10 +28,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    interIsoFoam
-
-Group
-    grpMultiphaseSolvers
+    atomizationFoam
 
 Description
     Solver derived from interFoam for two incompressible, isothermal immiscible
@@ -51,6 +48,15 @@ Description
 
     Additional phaseCoupling class for conversion of VoF elements
     to Lagrangian droplets by Dr. Martin Heinrich.
+
+    Reference:
+    \verbatim
+        Heinrich, M. and Schwarze, R. (2020).
+        3D-coupling of Volume-of-Fluid and Lagrangian particle tracking
+        for spray atomization simulation in OpenFOAM
+        SoftwareX, 11 (2020)
+        DOI 10.1016/j.softx.2020.100483
+    \endverbatim
 
 \*---------------------------------------------------------------------------*/
 

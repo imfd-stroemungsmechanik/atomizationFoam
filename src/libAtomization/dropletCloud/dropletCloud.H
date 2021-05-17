@@ -78,11 +78,11 @@ class dropletCloud
         scalar mup_;
         scalar sigma_;
 
-	//- Face zone IDs for postprocessing
+        //- Face zone IDs for postprocessing
         labelList faceZoneIDs_;
 
-	//- Word list for face zone names
-	wordList faceZoneNames_;
+        //- Word list for face zone names
+        wordList faceZoneNames_;
 
         //- Storage for output stream for postprocessing
         List<autoPtr<OFstream> > cloudDataFilesPtr_;

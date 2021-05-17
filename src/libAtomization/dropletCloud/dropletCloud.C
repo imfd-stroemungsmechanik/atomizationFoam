@@ -38,7 +38,7 @@ void Foam::dropletCloud::createDropletDataFiles()
     
     forAll (cloudDataFilesPtr_, i)
     {
-        if (cloudDataFilesPtr_[i].empty() && Pstream::master() && faceZoneIDs_.size())
+        if (!cloudDataFilesPtr_[i] && Pstream::master() && faceZoneIDs_.size())
         {
             word startTimeName = this->db().time().timeName(this->db().time().startTime().value());
 
