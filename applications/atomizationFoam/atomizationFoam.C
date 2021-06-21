@@ -121,9 +121,6 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << endl;
 
-        // Inject droplets
-        coupling.update();
-
         // Store the particle positions
         cloud.storeGlobalPositions();
 
@@ -151,6 +148,9 @@ int main(int argc, char *argv[])
                 mixture.correct();
             }
         }
+
+        // Inject droplets
+        coupling.update();
 
         // Move droplets
         cloud.move();
