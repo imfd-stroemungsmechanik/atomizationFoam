@@ -1,4 +1,8 @@
 EXE_INC = \
+    -I$(FOAM_SOLVERS)/multiphase/VoF \
+    -I$(FOAM_SOLVERS)/multiphase/interFoam \
+    -I$(LIB_SRC)/phaseSystemModels/twoPhaseInter/incompressibleInterPhaseTransportModel/lnInclude \
+    -I$(LIB_SRC)/phaseSystemModels/twoPhaseInter/VoFphaseIncompressibleTurbulenceModels/lnInclude \
     -I../../src/libAtomization/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/surfMesh/lnInclude \
@@ -14,8 +18,8 @@ EXE_INC = \
     -I$(LIB_SRC)/transportModels/interfaceProperties/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
-    -I$(LIB_SRC)/transportModels/immiscibleIncompressibleTwoPhaseMixture/lnInclude \
-    -I$(LIB_SRC)/transportModels/geometricVoF/lnInclude
+    -I$(LIB_SRC)/TurbulenceModels/phaseIncompressible/lnInclude \
+    -I$(LIB_SRC)/transportModels/immiscibleIncompressibleTwoPhaseMixture/lnInclude
 
 EXE_LIBS = \
     -L$(FOAM_USER_LIBBIN) \
@@ -33,4 +37,8 @@ EXE_LIBS = \
     -lwaveModels \
     -llagrangian \
     -lgeometricVoF \
-    -lAtomization
+    -lAtomization \
+    -ltwoPhaseMixture \
+    -ltwoPhaseProperties \
+    -lVoFphaseTurbulentTransportModels \
+    -lincompressibleInterPhaseTransportModels

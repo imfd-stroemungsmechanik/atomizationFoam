@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           |
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 Johan Roenby
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,36 +24,44 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Global
-    alphaCourantNo
+    porousCourantNo
 
 Description
     Calculates and outputs the mean and maximum Courant Numbers.
 
 \*---------------------------------------------------------------------------*/
 
-scalar maxAlphaCo
-(
-    runTime.controlDict().get<scalar>("maxAlphaCo")
-);
+scalar CoNum = 0;
+scalar meanCoNum = 0;
 
-scalar alphaCoNum = 0.0;
-scalar meanAlphaCoNum = 0.0;
-
-if (mesh.nInternalFaces())
 {
     scalarField sumPhi
     (
-        mixture.nearInterface()().primitiveField()
-       *fvc::surfaceSum(mag(phi))().primitiveField()
+        fvc::surfaceSum(mag(phi))().primitiveField()
     );
 
-    alphaCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+    if (porosityEnabled)
+    {
+        const volScalarField& porosity = tporosity.cref();
 
-    meanAlphaCoNum =
-        0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+        CoNum =
+            0.5*gMax(sumPhi/mesh.V().field()/porosity)
+           *runTime.deltaTValue();
+
+        meanCoNum =
+            0.5*(gSum(sumPhi)/gSum(mesh.V().field()*porosity))
+           *runTime.deltaTValue();
+    }
+    else
+    {
+        CoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+
+        meanCoNum =
+            0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+    }
 }
 
-Info<< "Interface Courant Number mean: " << meanAlphaCoNum
-    << " max: " << alphaCoNum << endl;
+Info<< "Courant Number mean: " << meanCoNum
+    << " max: " << CoNum << endl;
 
 // ************************************************************************* //

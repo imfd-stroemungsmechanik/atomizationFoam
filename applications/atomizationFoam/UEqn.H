@@ -11,6 +11,8 @@
         fvOptions(rho, U)
     );
 
+    #include "UEqnAddPorosity.H"
+
     UEqn.relax();
 
     fvOptions.constrain(UEqn);

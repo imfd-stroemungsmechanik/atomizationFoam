@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           |
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 Johan Roenby
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,32 +24,46 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Global
-    setDeltaT
+    porousAlphaCourantNo
 
 Description
-    Reset the timestep to maintain a constant maximum courant Number.
-    Reduction of time-step is immediate, but increase is damped to avoid
-    unstable oscillations.
+    Calculates and outputs the mean and maximum Courant Numbers.
 
 \*---------------------------------------------------------------------------*/
 
-if (adjustTimeStep)
+scalar maxAlphaCo = runTime.controlDict().get<scalar>("maxAlphaCo");
+scalar alphaCoNum = 0;
+scalar meanAlphaCoNum = 0;
+
+if (mesh.nInternalFaces())
 {
-    scalar maxDeltaTFact =
-        min(maxCo/(CoNum + SMALL), maxAlphaCo/(alphaCoNum + SMALL));
-
-    scalar deltaTFact = min(min(maxDeltaTFact, 1.0 + 0.1*maxDeltaTFact), 1.2);
-
-    runTime.setDeltaT
+    scalarField sumPhi
     (
-        min
-        (
-            deltaTFact*runTime.deltaTValue(),
-            maxDeltaT
-        )
+        mixture.nearInterface()().primitiveField()
+       *fvc::surfaceSum(mag(phi))().primitiveField()
     );
 
-    Info<< "deltaT = " <<  runTime.deltaTValue() << endl;
+    if (porosityEnabled)
+    {
+        const volScalarField& porosity = tporosity.cref();
+
+        alphaCoNum =
+            0.5*gMax(sumPhi/mesh.V().field()/porosity)*runTime.deltaTValue();
+
+        meanAlphaCoNum =
+            0.5*(gSum(sumPhi)/gSum(mesh.V().field()*porosity))
+           *runTime.deltaTValue();
+    }
+    else
+    {
+        alphaCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+
+        meanAlphaCoNum =
+            0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+    }
 }
+
+Info<< "Interface Courant Number mean: " << meanAlphaCoNum
+    << " max: " << alphaCoNum << endl;
 
 // ************************************************************************* //

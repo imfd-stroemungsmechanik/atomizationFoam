@@ -68,11 +68,12 @@ Description
 #include "CrankNicolsonDdtScheme.H"
 #include "subCycle.H"
 #include "immiscibleIncompressibleTwoPhaseMixture.H"
-#include "turbulentTransportModel.H"
+#include "incompressibleInterPhaseTransportModel.H"
 #include "pimpleControl.H"
 #include "fvOptions.H"
 #include "CorrectPhi.H"
 #include "fvcSmooth.H"
+#include "dynamicRefineFvMesh.H"
 
 #include "dropletCloud.H"
 #include "phaseCoupling.H"
@@ -102,9 +103,7 @@ int main(int argc, char *argv[])
     #include "initCorrectPhi.H"
     #include "createUfIfPresent.H"
 
-    turbulence->validate();
-
-    #include "CourantNo.H"
+    #include "porousCourantNo.H"
     #include "setInitialDeltaT.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -113,55 +112,83 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
         #include "readDyMControls.H"
-        #include "CourantNo.H"
-        #include "alphaCourantNo.H"
+        #include "porousCourantNo.H"
+        #include "porousAlphaCourantNo.H"
         #include "setDeltaT.H"
 
         ++runTime;
 
-        Info<< "Time = " << runTime.timeName() << endl;
+        Info<< "Time = " << runTime.timeName() << nl << endl;
 
         // Store the particle positions
         cloud.storeGlobalPositions();
 
-        // Do any mesh changes
-        mesh.update();
-
-        if (mesh.changing())
-        {
-            gh = (g & mesh.C()) - ghRef;
-            ghf = (g & mesh.Cf()) - ghRef;
-
-            MRF.update();
- 
-            if (correctPhi)
-            {
-                // Calculate absolute flux
-                // from the mapped surface velocity
-                phi = mesh.Sf() & Uf();
-
-                #include "correctPhi.H"
-
-                // Make the flux relative to the mesh motion
-                fvc::makeRelative(phi, U);
-
-                mixture.correct();
-            }
-        }
-
-        // Inject droplets
-        coupling.update();
-
-        // Move droplets
-        cloud.move();
-
         // --- Pressure-velocity PIMPLE corrector loop
         while (pimple.loop())
         {
+            if (pimple.firstIter() || moveMeshOuterCorrectors)
+            {
+                if (isA<dynamicRefineFvMesh>(mesh))
+                {
+                    advector.surf().reconstruct();
+                }
+
+                mesh.update();
+
+                if (mesh.changing())
+                {
+                    gh = (g & mesh.C()) - ghRef;
+                    ghf = (g & mesh.Cf()) - ghRef;
+
+                    if (isA<dynamicRefineFvMesh>(mesh))
+                    {
+                        advector.surf().mapAlphaField();
+                        alpha2 = 1.0 - alpha1;
+                        alpha2.correctBoundaryConditions();
+                        rho == alpha1*rho1 + alpha2*rho2;
+                        rho.correctBoundaryConditions();
+                        rho.oldTime() = rho;
+                        alpha2.oldTime() = alpha2;
+                    }
+
+                    MRF.update();
+
+                    if (correctPhi)
+                    {
+                        // Calculate absolute flux
+                        // from the mapped surface velocity
+                        phi = mesh.Sf() & Uf();
+
+                        #include "correctPhi.H"
+
+                        // Make the flux relative to the mesh motion
+                        fvc::makeRelative(phi, U);
+
+                        mixture.correct();
+                    }
+
+                    if (checkMeshCourantNo)
+                    {
+                        #include "meshCourantNo.H"
+                    }
+                }
+            }
+
+            // Inject droplets
+            coupling.update();
+
+            // Move droplets
+            cloud.move();
+
             #include "alphaControls.H"
             #include "alphaEqnSubCycle.H"
 
             mixture.correct();
+
+            if (pimple.frozenFlow())
+            {
+                continue;
+            }
 
             #include "UEqn.H"
 
