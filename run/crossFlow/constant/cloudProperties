@@ -22,7 +22,7 @@ phaseName       water;
 collision       on;
 
 // Droplet secondary breakup
-breakupModel    ReitzDiwaker;
+breakupModel    ReitzDiwakar;
 
 // FaceZones for postprocessing
 faceZones       (fz1);
